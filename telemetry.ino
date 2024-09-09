@@ -9,7 +9,7 @@ float readAltitude(float P0);
 float readTemperature();
 float readPressure();
 void writeToSerial();
-int checkState();
+int checkState(int &state, float altitude, float acceleration);
 float readAcceleration();
 
 //vars
@@ -27,20 +27,24 @@ void setup() {
   Serial.begin(9600);
   while (!Serial);
 
+//initialise IMU
+  if (!IMU.begin()) {
+    Serial.println("Failed to initialize IMU!");
+    while (1);
+  }
+
+delay(500);
+
 //initialise barometer
   if (!BARO.begin()) {
     Serial.println("Failed to initialize pressure sensor!");
     while (1);
   }
 
+delay(500);
+
 //initialise altimeter
 altitudeCorrection = initialiseAltimeter(launchAltitude); 
-
-//initialise IMU
-  if (!IMU.begin()) {
-    Serial.println("Failed to initialize IMU!");
-    while (1);
-  }
 
 }
 
@@ -64,16 +68,17 @@ int currentState = checkState(state, altitude, acceleration);
 //output to serial
 writeToSerial(pressure, altitude, temperature, acceleration, currentState);
 
-  // wait 1 second to print again
+  // wait .1 second to check sensors again
   delay(100);
 }
 
+/////////////////////////////////////////////
 
-
-int checkState(int state, float altitude, float acceleration){
+// state machine
+int checkState(int &state, float altitude, float acceleration){
 switch (state) {
   case 0:
-    if (acceleration >=1.5) { //we have lift off!
+    if (acceleration > 2.0) { //we have lift off!
     state = 1;
     Serial.println("launch detected!");
     }
@@ -82,7 +87,7 @@ switch (state) {
   case 1:
     // are we still in powered flight?
     // if not move to state 2
-    // case = 2
+    // state = 2;
     return state;
     break;
   case 2:
@@ -111,6 +116,8 @@ switch (state) {
   }
 }
 
+///////////////////////////////////////
+
 void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int currentState){
 
   // print the pressure value
@@ -124,24 +131,26 @@ void writeToSerial(float pressure, float altitude, float temperature, float acce
   Serial.println(" meters");
 
   // print the temperature value
-  //Serial.print("Temperature = ");
-  //Serial.print(temperature);
-  //Serial.println(" C");
+  Serial.print("Temperature = ");
+  Serial.print(temperature);
+  Serial.println(" C");
 
  // print the acceleration value
-  //Serial.print("Accelaration = ");
+  Serial.print("Accelaration = ");
   Serial.print(acceleration);
-  //Serial.println(" G");
+  Serial.println(" G");
 
   //print the state
 
-  //Serial.print("State = ");
-  //Serial.println(currentState);
+  Serial.print("State = ");
+  Serial.println(currentState);
 
   // print an empty line
   Serial.println();
 
 }
+
+///////////////////////////////////////
 
 float readAcceleration(){
 float x, y, z, acceleration;
@@ -153,6 +162,8 @@ float x, y, z, acceleration;
 return acceleration;
 
 }
+
+//////////////////////////
 
 float readTemperature(){
   // read the temperature value
@@ -166,6 +177,8 @@ float readPressure() {
   float pressure = BARO.readPressure();
   return pressure;
 }
+
+///////////////////////////////
 
 float readAltitude(float P0) {
   // Read the pressure value
@@ -183,6 +196,7 @@ float readAltitude(float P0) {
 return altitude;
 }
 
+///////////////////////////////////
 
 //function to generate altimeter offset
 float initialiseAltimeter(float launchAltitude) {
@@ -198,3 +212,4 @@ float altitude = 44330 * (1.0 - pow(pressure / P0, 0.1903));
 return altitudeCorrection;
 }
 
+////////////////////////////////////////
