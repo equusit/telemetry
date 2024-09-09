@@ -18,7 +18,7 @@ const float launchAltitude = 127;
 float altitudeCorrection = 0;
 float temperature = 0;
 int state = 0; //0 = ground idle, 1 = powered flight, 2 = gliding up, 3 = ballistic descent, 4 = chute decent, 5 = landed, 6 = error
-
+float apogee = 0;
 
 ///////////////////////////////////
 
@@ -66,7 +66,7 @@ float acceleration = readAcceleration();
 int currentState = checkState(state, altitude, acceleration);
 
 //output to serial
-writeToSerial(pressure, altitude, temperature, acceleration, currentState);
+writeToSerial(pressure, altitude, temperature, acceleration, currentState, apogee);
 
   // wait .1 second to check sensors again
   delay(100);
@@ -118,7 +118,7 @@ switch (state) {
 
 ///////////////////////////////////////
 
-void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int currentState){
+void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int currentState, float apogee){
 
   // print the pressure value
   Serial.print("Pressure = ");
@@ -145,6 +145,8 @@ void writeToSerial(float pressure, float altitude, float temperature, float acce
   Serial.print("State = ");
   Serial.println(currentState);
 
+  Serial.print("Apogee = ");
+  Serial.println(apogee);
   // print an empty line
   Serial.println();
 
@@ -190,6 +192,10 @@ float readAltitude(float P0) {
 
   // Apply altitude correction
   altitude += altitudeCorrection;
+
+  if (altitude > apogee) {
+    apogee = altitude;
+  }
 
 // record altiude values to suitable data structure here for use in checkState
 
