@@ -12,7 +12,11 @@ void writeToSerial();
 int checkState(int &state, float altitude, float acceleration);
 float readAcceleration();
 
-//vars
+
+#define ARRAY_SIZE 5
+
+// Variables
+float accelerations[ARRAY_SIZE];  // Array to store last 5 readings
 const float P0 = 100.3;  // assumed Sea level pressures
 const float launchAltitude = 127;
 float altitudeCorrection = 0;
@@ -78,7 +82,7 @@ writeToSerial(pressure, altitude, temperature, acceleration, currentState, apoge
 int checkState(int &state, float altitude, float acceleration){
 switch (state) {
   case 0:
-    if (acceleration > 2.0) { //we have lift off!
+    if (accelerations[0] >= 2.0 && accelerations[1] >= 2.0) { //we have lift off!
     state = 1;
     Serial.println("launch detected!");
     }
@@ -138,6 +142,16 @@ void writeToSerial(float pressure, float altitude, float temperature, float acce
  // print the acceleration value
   Serial.print("Accelaration = ");
   Serial.print(acceleration);
+  Serial.print(",");
+  Serial.print(accelerations[0]);
+  Serial.print(",");
+  Serial.print(accelerations[1]);
+  Serial.print(",");
+  Serial.print(accelerations[2]);
+  Serial.print(",");
+  Serial.print(accelerations[3]);
+  Serial.print(",");
+  Serial.print(accelerations[4]);
   Serial.println(" G");
 
   //print the state
@@ -158,9 +172,17 @@ float readAcceleration(){
 float x, y, z, acceleration;
 
  if (IMU.accelerationAvailable()) {
-    IMU.readAcceleration(x,y,z); //only reading the x value, y & z silently ignored
+    IMU.readAcceleration(x,y,z); //only using the x value, y & z silently ignored
   acceleration = x;
   }
+
+  for (int i = ARRAY_SIZE - 2; i >= 0; i--) {
+    accelerations[i + 1] = accelerations[i];  // Move value at i to i+1
+  }
+
+  // Store the new reading in index 0
+  accelerations[0] = acceleration;
+
 return acceleration;
 
 }
