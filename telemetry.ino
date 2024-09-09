@@ -50,6 +50,21 @@ delay(500);
 //initialise altimeter
 altitudeCorrection = initialiseAltimeter(launchAltitude); 
 
+//print headers
+Serial.print("Pressure (kPa");
+Serial.print(",");
+Serial.print("Altitude (m)");
+Serial.print(",");
+Serial.print("Temperature (c)");
+Serial.print(",");
+Serial.print("Accelaration (g)");
+Serial.print(",");
+Serial.print("Flight State");
+Serial.print(",");
+Serial.print("Apogee = ");
+Serial.print(",");
+Serial.println();
+
 }
 
 void loop() {
@@ -125,42 +140,36 @@ switch (state) {
 void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int currentState, float apogee){
 
   // print the pressure value
-  Serial.print("Pressure = ");
+  //Serial.print("Pressure")
   Serial.print(pressure);
-  Serial.println(" kPa");
-
+  Serial.print(",");
+  //Serial.println(" kPa");
   // print the calculated altitude
-  Serial.print("Altitude = ");
+  //Serial.print("Altitude = ");
   Serial.print(altitude,1);
-  Serial.println(" meters");
+  Serial.print(",");
+  //Serial.println(" meters");
 
   // print the temperature value
-  Serial.print("Temperature = ");
+  //Serial.print("Temperature = ");
   Serial.print(temperature);
-  Serial.println(" C");
+  Serial.print(",");
+  //Serial.println(" C");
 
  // print the acceleration value
-  Serial.print("Accelaration = ");
+ //Serial.print("Accelaration = ");
   Serial.print(acceleration);
   Serial.print(",");
-  Serial.print(accelerations[0]);
-  Serial.print(",");
-  Serial.print(accelerations[1]);
-  Serial.print(",");
-  Serial.print(accelerations[2]);
-  Serial.print(",");
-  Serial.print(accelerations[3]);
-  Serial.print(",");
-  Serial.print(accelerations[4]);
-  Serial.println(" G");
+  //Serial.println(" G");
 
   //print the state
+  //Serial.print("State = ");
+  Serial.print(currentState);
+  Serial.print(",");
+  
+  //Serial.print("Apogee = ");
+  Serial.print(apogee);
 
-  Serial.print("State = ");
-  Serial.println(currentState);
-
-  Serial.print("Apogee = ");
-  Serial.println(apogee);
   // print an empty line
   Serial.println();
 
