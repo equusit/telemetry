@@ -51,18 +51,13 @@ delay(500);
 altitudeCorrection = initialiseAltimeter(launchAltitude); 
 
 //print headers
-Serial.print("Pressure (kPa");
-Serial.print(",");
-Serial.print("Altitude (m)");
-Serial.print(",");
-Serial.print("Temperature (c)");
-Serial.print(",");
-Serial.print("Accelaration (g)");
-Serial.print(",");
-Serial.print("Flight State");
-Serial.print(",");
-Serial.print("Apogee = ");
-Serial.print(",");
+  Serial.print("Timestamp (s),");
+  Serial.print("Pressure (kPa),");
+  Serial.print("Altitude (m),");
+  Serial.print("Temperature (c),");
+  Serial.print("Acceleration (g),");
+  Serial.print("Flight State,");
+  Serial.println("Apogee (m)");
 Serial.println();
 
 }
@@ -138,6 +133,11 @@ switch (state) {
 ///////////////////////////////////////
 
 void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int currentState, float apogee){
+
+
+  // Print the timestamp
+  Serial.print(millis());
+  Serial.print(",");
 
   // print the pressure value
   //Serial.print("Pressure")
