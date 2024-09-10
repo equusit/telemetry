@@ -12,8 +12,10 @@ void writeToSerial();
 int checkState(int &state, float altitude, float acceleration);
 float readAcceleration();
 
-
+#define LAUNCH_THRESHOLD 1.1
 #define ARRAY_SIZE 5
+#define GREEN_PIN 5 
+#define RED_PIN 4 
 
 // Variables
 float accelerations[ARRAY_SIZE];  // Array to store last 5 readings
@@ -30,6 +32,18 @@ void setup() {
 //initialise serial
   Serial.begin(9600);
   while (!Serial);
+
+// Initialize the LED pin
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+
+  //blink test
+  digitalWrite(RED_PIN, HIGH);  
+  digitalWrite(GREEN_PIN, HIGH);  
+  delay(100);
+  digitalWrite(RED_PIN, LOW);
+  digitalWrite(GREEN_PIN, LOW);
+
 
 //initialise IMU
   if (!IMU.begin()) {
@@ -59,6 +73,9 @@ altitudeCorrection = initialiseAltimeter(launchAltitude);
   Serial.print("Flight State,");
   Serial.println("Apogee (m)");
 Serial.println();
+
+// setup complete
+  digitalWrite(GREEN_PIN, HIGH); 
 
 }
 
@@ -92,9 +109,10 @@ writeToSerial(pressure, altitude, temperature, acceleration, currentState, apoge
 int checkState(int &state, float altitude, float acceleration){
 switch (state) {
   case 0:
-    if (accelerations[0] >= 2.0 && accelerations[1] >= 2.0) { //we have lift off!
+    if (accelerations[0] >= LAUNCH_THRESHOLD && accelerations[1] >= LAUNCH_THRESHOLD) { //we have lift off!
     state = 1;
     Serial.println("launch detected!");
+    digitalWrite(RED_PIN, HIGH);  // Turn on the red LED
     }
     return state;
     break;
@@ -135,7 +153,7 @@ switch (state) {
 void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int currentState, float apogee){
 
   // Get the current timestamp in milliseconds and convert to seconds
-  float elapsedTime = millis() / 1000.0;
+  float elapsedTime = (float)millis() / 1000.0;  // Convert to seconds with tenths
 
   // Print the timestamp
   Serial.print(elapsedTime,2);
