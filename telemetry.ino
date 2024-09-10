@@ -82,7 +82,7 @@ int currentState = checkState(state, altitude, acceleration);
 //output to serial
 writeToSerial(pressure, altitude, temperature, acceleration, currentState, apogee);
 
-  // wait .1 second to check sensors again
+  // wait .1 second to check sensors again. This produces logging c. every 150msec
   delay(100);
 }
 
@@ -134,9 +134,11 @@ switch (state) {
 
 void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int currentState, float apogee){
 
+  // Get the current timestamp in milliseconds and convert to seconds
+  float elapsedTime = millis() / 1000.0;
 
   // Print the timestamp
-  Serial.print(millis());
+  Serial.print(elapsedTime,2);
   Serial.print(",");
 
   // print the pressure value
