@@ -14,13 +14,16 @@ float readAcceleration();
 void blnkTest();
 
 #define LAUNCH_THRESHOLD 1.0
+#define BURNOUT_THRESHOLD 0.5
 #define ARRAY_SIZE 5
+#define WHITE_PIN3 7
 #define WHITE_PIN 6
 #define GREEN_PIN 5 
 #define RED_PIN 4 
 
 // Variables
 float accelerations[ARRAY_SIZE];  // Array to store last 5 readings
+float altitudes[ARRAY_SIZE];
 const float P0 = 100.3;  // assumed Sea level pressures
 const float launchAltitude = 127;
 float altitudeCorrection = 0;
@@ -112,9 +115,12 @@ switch (state) {
     return state;
     break;
   case 1:
-    // are we still in powered flight?
-    // if not move to state 2
-    // state = 2;
+    if (altitudes[0] > altitudes[1] && accelerations[0] <= BURNOUT_THRESHOLD && accelerations[1] <= BURNOUT_THRESHOLD) { //motor burnt out
+    state = 2;
+    Serial.println("burnout detected");
+    digitalWrite(RED_PIN, HIGH);  // Turn on the red LED
+    digitalWrite(GREEN_PIN, HIGH);  // Turn off the green LED
+    }
     return state;
     break;
   case 2:
@@ -243,7 +249,12 @@ float readAltitude(float P0) {
     apogee = altitude;
   }
 
-// record altiude values to suitable data structure here for use in checkState
+for (int i = ARRAY_SIZE - 2; i >= 0; i--) {
+    altitudes[i + 1] = altitudes[i];  // Move value at i to i+1
+  }
+
+  // Store the new reading in index 0
+  altitudes[0] = altitude;
 
 return altitude;
 }
@@ -272,6 +283,7 @@ void blinkTest() {
   pinMode(RED_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
   pinMode(WHITE_PIN, OUTPUT);
+   pinMode(WHITE_PIN3, OUTPUT);
   //blink test
   digitalWrite(RED_PIN, HIGH); 
   delay(200); 
@@ -279,18 +291,23 @@ void blinkTest() {
   delay(200);
   digitalWrite(WHITE_PIN, HIGH);
   delay(200);
+  digitalWrite(WHITE_PIN3, HIGH);
+  delay(200);
   digitalWrite(RED_PIN, LOW);
   digitalWrite(GREEN_PIN, LOW);
   digitalWrite(WHITE_PIN, LOW);
+  digitalWrite(WHITE_PIN3, LOW);
   delay(400);
  for (int i = 2; i > 0; i--) {
   digitalWrite(RED_PIN, HIGH); 
   digitalWrite(GREEN_PIN, HIGH);  
   digitalWrite(WHITE_PIN, HIGH);
+  digitalWrite(WHITE_PIN3, HIGH);
   delay(400);
   digitalWrite(RED_PIN, LOW);
   digitalWrite(GREEN_PIN, LOW);
   digitalWrite(WHITE_PIN, LOW);
+  digitalWrite(WHITE_PIN3, LOW);
   delay(200);
  }
 }
