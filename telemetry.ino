@@ -11,9 +11,11 @@ float readPressure();
 void writeToSerial();
 int checkState(int &state, float altitude, float acceleration);
 float readAcceleration();
+void blnkTest();
 
-#define LAUNCH_THRESHOLD 1.1
+#define LAUNCH_THRESHOLD 1.0
 #define ARRAY_SIZE 5
+#define WHITE_PIN 6
 #define GREEN_PIN 5 
 #define RED_PIN 4 
 
@@ -29,20 +31,12 @@ float apogee = 0;
 ///////////////////////////////////
 
 void setup() {
+
+blinkTest();
+
 //initialise serial
   Serial.begin(9600);
   while (!Serial);
-
-// Initialize the LED pin
-  pinMode(RED_PIN, OUTPUT);
-  pinMode(GREEN_PIN, OUTPUT);
-
-  //blink test
-  digitalWrite(RED_PIN, HIGH);  
-  digitalWrite(GREEN_PIN, HIGH);  
-  delay(100);
-  digitalWrite(RED_PIN, LOW);
-  digitalWrite(GREEN_PIN, LOW);
 
 
 //initialise IMU
@@ -113,6 +107,7 @@ switch (state) {
     state = 1;
     Serial.println("launch detected!");
     digitalWrite(RED_PIN, HIGH);  // Turn on the red LED
+    digitalWrite(GREEN_PIN, LOW);  // Turn off the green LED
     }
     return state;
     break;
@@ -270,3 +265,32 @@ return altitudeCorrection;
 }
 
 ////////////////////////////////////////
+
+//blink test
+void blinkTest() {
+  // Initialize the LED pin
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(WHITE_PIN, OUTPUT);
+  //blink test
+  digitalWrite(RED_PIN, HIGH); 
+  delay(200); 
+  digitalWrite(GREEN_PIN, HIGH);  
+  delay(200);
+  digitalWrite(WHITE_PIN, HIGH);
+  delay(200);
+  digitalWrite(RED_PIN, LOW);
+  digitalWrite(GREEN_PIN, LOW);
+  digitalWrite(WHITE_PIN, LOW);
+  delay(400);
+ for (int i = 2; i > 0; i--) {
+  digitalWrite(RED_PIN, HIGH); 
+  digitalWrite(GREEN_PIN, HIGH);  
+  digitalWrite(WHITE_PIN, HIGH);
+  delay(400);
+  digitalWrite(RED_PIN, LOW);
+  digitalWrite(GREEN_PIN, LOW);
+  digitalWrite(WHITE_PIN, LOW);
+  delay(200);
+ }
+}
