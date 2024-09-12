@@ -16,6 +16,7 @@ void blnkTest();
 
 #define LAUNCH_THRESHOLD 1.4
 #define BURNOUT_THRESHOLD 1.2
+#define LANDING_ROT_THRESHOLD 1
 #define ARRAY_SIZE 5
 #define WHITE_PIN3 7
 #define WHITE_PIN 6
@@ -39,9 +40,9 @@ void setup() {
 
 blinkTest();
 
-//initialise serial
+//initialise serial but dont wait
   Serial.begin(9600);
-  while (!Serial);
+ 
 
 
 //initialise IMU
@@ -50,7 +51,7 @@ blinkTest();
     while (1);
   }
 
-delay(500);
+delay(1000);
 
 //initialise barometer
   if (!BARO.begin()) {
@@ -95,7 +96,16 @@ float rotation = readRotation();
 
 // check state
 
-int currentState = checkState(state, altitude, acceleration);
+int currentState = checkState(state, altitude, acceleration, rotation);
+
+if (currentState == 5) {
+       while (1) {
+      digitalWrite(WHITE_PIN3, HIGH);
+      delay(400);
+      digitalWrite(WHITE_PIN3, LOW);
+      delay(200);
+      }
+}
 
 //output to serial
 writeToSerial(pressure, altitude, temperature, acceleration, rotation, currentState, apogee);
@@ -107,41 +117,48 @@ writeToSerial(pressure, altitude, temperature, acceleration, rotation, currentSt
 /////////////////////////////////////////////
 
 // state machine
-int checkState(int &state, float altitude, float acceleration){
+int checkState(int &state, float altitude, float acceleration, float rotation){
 switch (state) {
   case 0:
     if (accelerations[0] >= LAUNCH_THRESHOLD && accelerations[1] >= LAUNCH_THRESHOLD) { //we have lift off!
     state = 1;
     Serial.println("launch detected!");
-    digitalWrite(RED_PIN, HIGH);  // Turn on the red LED
-    digitalWrite(GREEN_PIN, LOW);  // Turn off the green LED
+    digitalWrite(RED_PIN, HIGH); 
+    digitalWrite(GREEN_PIN, LOW);  
     }
     return state;
     break;
   case 1:
-    if (altitudes[0] > altitudes[1] && accelerations[0] <= BURNOUT_THRESHOLD && accelerations[1] <= BURNOUT_THRESHOLD) { //motor burnt out
+    if (altitudes[0] > altitudes[1] && altitudes[1] > altitudes[2] && accelerations[0] <= BURNOUT_THRESHOLD && accelerations[1] <= BURNOUT_THRESHOLD) { //motor burnt out
     state = 2;
     Serial.println("burnout detected");
-    digitalWrite(RED_PIN, HIGH);  // Turn on the red LED
-    digitalWrite(GREEN_PIN, HIGH);  // Turn off the green LED
+    digitalWrite(RED_PIN, HIGH);  
+    digitalWrite(GREEN_PIN, HIGH);  
     }
     return state;
-    break;
+    // break; we can fall through
   case 2:
-    // have we reached apogee?
-    // if so move to state 2
-    // case = 3
+    // have we reached/passed apogee?
+    if (altitudes[0] > altitudes[1] && altitudes[1] > altitudes[2]) { //we are descending
+    digitalWrite(RED_PIN, LOW); 
+    digitalWrite(GREEN_PIN, LOW);  
+    digitalWrite(WHITE_PIN, HIGH);
+    state = 3;
+    }
     return state;
     break;
   case 3:
     // have we deployed parachutes? is our rate of decent falling    
     // if so move to state 4
-    // case = 4
-    return state;
+    // state = 4
+    // return state;
+    // no break;, allow to fall through if we dont detect parachutes
   case 4:
-    // have we landed? is there 0 yaw and our altitude +/- 10m of launch
+    // have we landed?
+    if (rotations[0] <= LANDING_ROT_THRESHOLD && rotations[1] <= LANDING_ROT_THRESHOLD) { // the rocket is still, have we landed?
     // if so move to state 5
-    // case = 5
+    state = 5;
+    }
     return state;
     break;
   default:
@@ -240,6 +257,7 @@ float rotation, x, y, z;
 
   // Store the new reading in index 0
   rotations[0] = rotation;
+
 
 return rotation;
 
