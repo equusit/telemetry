@@ -11,9 +11,10 @@ float readPressure();
 void writeToSerial();
 int checkState(int &state, float altitude, float acceleration);
 float readAcceleration();
+float readRotation();
 void blnkTest();
 
-#define LAUNCH_THRESHOLD 1.2
+#define LAUNCH_THRESHOLD 1.4
 #define BURNOUT_THRESHOLD 1.2
 #define ARRAY_SIZE 5
 #define WHITE_PIN3 7
@@ -24,6 +25,7 @@ void blnkTest();
 // Variables
 float accelerations[ARRAY_SIZE];  // Array to store last 5 readings
 float altitudes[ARRAY_SIZE];
+float rotations[ARRAY_SIZE];
 const float P0 = 100.3;  // assumed Sea level pressures
 const float launchAltitude = 127;
 float altitudeCorrection = 0;
@@ -67,6 +69,7 @@ altitudeCorrection = initialiseAltimeter(launchAltitude);
   Serial.print("Altitude (m),");
   Serial.print("Temperature (c),");
   Serial.print("Acceleration (g),");
+  Serial.print("Rotation (degrees/sec),");
   Serial.print("Flight State,");
   Serial.println("Apogee (m)");
 Serial.println();
@@ -88,13 +91,14 @@ float pressure = readPressure();
 float acceleration = readAcceleration();
 
 // collect yaw
+float rotation = readRotation();
 
 // check state
 
 int currentState = checkState(state, altitude, acceleration);
 
 //output to serial
-writeToSerial(pressure, altitude, temperature, acceleration, currentState, apogee);
+writeToSerial(pressure, altitude, temperature, acceleration, rotation, currentState, apogee);
 
   // wait .1 second to check sensors again. This produces logging c. every 150msec
   delay(100);
@@ -134,7 +138,6 @@ switch (state) {
     // if so move to state 4
     // case = 4
     return state;
-    break;
   case 4:
     // have we landed? is there 0 yaw and our altitude +/- 10m of launch
     // if so move to state 5
@@ -151,7 +154,7 @@ switch (state) {
 
 ///////////////////////////////////////
 
-void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int currentState, float apogee){
+void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int rotation, int currentState, float apogee){
 
   // Get the current timestamp in milliseconds and convert to seconds
   float elapsedTime = (float)millis() / 1000.0;  // Convert to seconds with tenths
@@ -182,6 +185,9 @@ void writeToSerial(float pressure, float altitude, float temperature, float acce
   Serial.print(acceleration);
   Serial.print(",");
   //Serial.println(" G");
+
+  Serial.print(rotation);
+  Serial.print(",");
 
   //print the state
   //Serial.print("State = ");
@@ -214,6 +220,29 @@ float x, y, z, acceleration;
   accelerations[0] = acceleration;
 
 return acceleration;
+
+}
+
+//////////////////////////
+
+float readRotation(){
+
+float rotation, x, y, z;
+
+  if (IMU.gyroscopeAvailable()) {
+    IMU.readGyroscope(x, y, z);
+    rotation = sqrt(x * x + y * y + z * z); //magnitude of yaw/pitch/roll to colate data from 3 axis
+  }
+
+  for (int i = ARRAY_SIZE - 2; i >= 0; i--) {
+    rotations[i + 1] = rotations[i];  // Move value at i to i+1
+  }
+
+  // Store the new reading in index 0
+  rotations[0] = rotation;
+
+return rotation;
+
 
 }
 
