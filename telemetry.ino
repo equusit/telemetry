@@ -13,8 +13,8 @@ int checkState(int &state, float altitude, float acceleration);
 float readAcceleration();
 void blnkTest();
 
-#define LAUNCH_THRESHOLD 1.0
-#define BURNOUT_THRESHOLD 0.5
+#define LAUNCH_THRESHOLD 1.2
+#define BURNOUT_THRESHOLD 1.2
 #define ARRAY_SIZE 5
 #define WHITE_PIN3 7
 #define WHITE_PIN 6
@@ -202,8 +202,8 @@ float readAcceleration(){
 float x, y, z, acceleration;
 
  if (IMU.accelerationAvailable()) {
-    IMU.readAcceleration(x,y,z); //only using the x value, y & z silently ignored
-  acceleration = x;
+    IMU.readAcceleration(x,y,z);
+  acceleration = sqrt(x * x + y * y + z * z); //magnitude of acceleration to colate data from 3 axis
   }
 
   for (int i = ARRAY_SIZE - 2; i >= 0; i--) {
