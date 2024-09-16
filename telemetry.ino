@@ -1,6 +1,14 @@
 #include <Arduino_LPS22HB.h> //barometer
 #include "Arduino_BMI270_BMM150.h" //IMU
 #include "LED.h"
+#include "Logger.h"
+
+////////////////////////////////
+
+// Create a logger instance with the desired method
+LoggerSelector logger(LOG_SERIAL); // For serial logging
+// LoggerSelector logger(LOG_SD);     // For SD card logging
+// LoggerSelector logger(LOG_FLASH);     // For flash memory logging
 
 ////////////////////////////////
 
@@ -50,12 +58,11 @@ int attempt = 0;
 
 void setup() {
 
-//initialise serial but dont wait
-Serial.begin(9600);
 
+//initialise the logger
+logger.begin();
 
 blinkTest();
-
 
 Serial.println("serial initialised");
 
@@ -70,16 +77,18 @@ delay(500);
 altitudeCorrection = initialiseAltimeter(launchAltitude); 
 
 //print headers
-  Serial.print("Timestamp (s),");
-  Serial.print("Pressure (kPa),");
-  Serial.print("Altitude (m),");
-  Serial.print("Temperature (c),");
-  Serial.print("Acceleration (g),");
-  Serial.print("Rotation (degrees/sec),");
-  Serial.print("Flight State,");
-  Serial.println("Apogee (m)");
-Serial.println();
 
+String data = String("Timestamp (s)") + ",";
+   data += String("Pressure (kPa)") + ",";
+  data += String("Altitude (m),");
+  data += String("Temperature (c),");
+  data += String("Acceleration (g),");
+  data += String("Rotation (degrees/sec),");
+  data += String("Flight State,");
+  data += String("Apogee (m)");
+
+ logger.logData(data);
+ 
 // setup complete
   greenLED.turnOn(); 
 
@@ -112,8 +121,17 @@ if (currentState == 5) {
       }
 }
 
+    // Collect data into a string
+    String data = collectData(pressure, altitude, temperature, acceleration, rotation, currentState, apogee);
+
+    // Log data
+    logger.logData(data);
+
+    // Optionally flush data to ensure it's written
+    logger.flush();
+
 //output to serial
-writeToSerial(pressure, altitude, temperature, acceleration, rotation, currentState, apogee);
+// writeToSerial(pressure, altitude, temperature, acceleration, rotation, currentState, apogee);
 
   // wait .1 second to check sensors again. This produces logging c. every 150msec
   delay(100);
@@ -177,52 +195,21 @@ switch (state) {
 
 ///////////////////////////////////////
 
-void writeToSerial(float pressure, float altitude, float temperature, float acceleration, int rotation, int currentState, float apogee){
+String collectData(float pressure, float altitude, float temperature, float acceleration, float rotation, int currentState, float apogeeValue) {
+    // Get the current timestamp
+    float elapsedTime = millis() / 1000.0;
 
-  // Get the current timestamp in milliseconds and convert to seconds
-  float elapsedTime = (float)millis() / 1000.0;  // Convert to seconds with tenths
+    // Format data as CSV
+    String data = String(elapsedTime, 2) + ",";
+    data += String(pressure) + ",";
+    data += String(altitude, 1) + ",";
+    data += String(temperature) + ",";
+    data += String(acceleration) + ",";
+    data += String(rotation) + ",";
+    data += String(currentState) + ",";
+    data += String(apogeeValue);
 
-  // Print the timestamp
-  Serial.print(elapsedTime,2);
-  Serial.print(",");
-
-  // print the pressure value
-  //Serial.print("Pressure")
-  Serial.print(pressure);
-  Serial.print(",");
-  //Serial.println(" kPa");
-  // print the calculated altitude
-  //Serial.print("Altitude = ");
-  Serial.print(altitude,1);
-  Serial.print(",");
-  //Serial.println(" meters");
-
-  // print the temperature value
-  //Serial.print("Temperature = ");
-  Serial.print(temperature);
-  Serial.print(",");
-  //Serial.println(" C");
-
- // print the acceleration value
- //Serial.print("Accelaration = ");
-  Serial.print(acceleration);
-  Serial.print(",");
-  //Serial.println(" G");
-
-  Serial.print(rotation);
-  Serial.print(",");
-
-  //print the state
-  //Serial.print("State = ");
-  Serial.print(currentState);
-  Serial.print(",");
-  
-  //Serial.print("Apogee = ");
-  Serial.print(apogee);
-
-  // print an empty line
-  Serial.println();
-
+    return data;
 }
 
 ///////////////////////////////////////
